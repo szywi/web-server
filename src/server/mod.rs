@@ -1,9 +1,12 @@
+use crate::server::config::ServerConfig;
 use std::io::prelude::*;
 use std::net::{TcpListener, TcpStream};
 use std::{fs, process};
 
+pub mod config;
+
 pub struct Server {
-    host: String,
+    config: ServerConfig,
     listener: Option<TcpListener>,
 }
 
@@ -13,22 +16,27 @@ pub struct Server {
 impl Server {
     pub fn new() -> Server {
         Server {
-            host: "127.0.0.1:7878".to_string(),
+            config: ServerConfig::default(),
             listener: None,
         }
     }
 
     pub fn start(&mut self) {
-        self.listener = Some(TcpListener::bind(&self.host).unwrap_or_else(|err| {
-            println!("Unable to bind to {}\r\n{}", self.host, err);
-            process::exit(1);
-        }));
+        if self.listener.is_some() {
+            println!("Server is already started!");
+            return;
+        }
 
-        if let Some(ref listener) = self.listener {
-            for stream in listener.incoming() {
-                let stream = stream.unwrap();
-                handle_connection(stream);
-            }
+        let listener: TcpListener = TcpListener::bind(self.config.host()).unwrap_or_else(|err| {
+            println!("Unable to bind to {}\r\n{}", self.config.host(), err);
+            process::exit(1);
+        });
+
+        self.listener = Some(listener);
+
+        for stream in self.listener.as_ref().unwrap().incoming() {
+            let stream = stream.unwrap();
+            handle_connection(stream);
         }
     }
 }
