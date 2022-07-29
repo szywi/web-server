@@ -3,6 +3,7 @@ use std::net::{IpAddr, Ipv4Addr};
 pub struct ServerConfig {
     pub address: IpAddr,
     pub port: u16,
+    pub workers: usize,
     host: Option<String>,
 }
 
@@ -21,6 +22,7 @@ impl Default for ServerConfig {
         ServerConfig {
             address: Ipv4Addr::new(127, 0, 0, 1).into(),
             port: 7878,
+            workers: 10,
             host: None,
         }
     }

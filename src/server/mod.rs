@@ -1,4 +1,5 @@
 use crate::server::config::ServerConfig;
+use crate::threads::ThreadPool;
 use std::io::prelude::*;
 use std::net::{TcpListener, TcpStream};
 use std::{fs, process};
@@ -10,9 +11,6 @@ pub struct Server {
     listener: Option<TcpListener>,
 }
 
-// TODO (P1): Deal with start (create listener), options & shutdown
-// TODO (P1): Thread pool
-// TODO (P2): Enforce connection limit
 impl Server {
     pub fn new() -> Server {
         Server {
@@ -33,10 +31,14 @@ impl Server {
         });
 
         self.listener = Some(listener);
+        let pool = ThreadPool::new(self.config.workers);
 
         for stream in self.listener.as_ref().unwrap().incoming() {
             let stream = stream.unwrap();
-            handle_connection(stream);
+
+            pool.execute(|| {
+                handle_connection(stream);
+            });
         }
     }
 }
